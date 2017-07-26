@@ -7,12 +7,16 @@ export default class DragAndReset extends Component {
 
     this.state = {
       pan: new Animated.ValueXY(),
+      scale: new Animated.Value(1),
     };
   }
 
   componentWillMount() {
     this._panResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: (e, gestureState) => {
+        this.state.scale.setValue(1.2);
+      },
       onPanResponderMove: Animated.event([
         null, { dx: this.state.pan.x, dy: this.state.pan.y }
       ]),
@@ -21,18 +25,24 @@ export default class DragAndReset extends Component {
             this.state.pan,         //Step 2
             {toValue:{x:0,y:0}}     //Step 3
         ).start();
+        this.state.scale.setValue(1);
       },
     });
   }
 
   render() {
-    const { fadeAnim, spin, pan } = this.state;
+    const { pan, scale } = this.state;
+
+    const [translateX, translateY] = [pan.x, pan.y];
+    const rotate = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: ["-30deg", "0deg", "30deg"]});
+
+    const helloStyles = {transform: [{translateX}, {translateY}, {rotate}, {scale}]};
 
     return (
       <View style={styles.container}>
         <Animated.View
           {...this._panResponder.panHandlers}
-          style={this.state.pan.getLayout()}
+          style={helloStyles}
         >
           <Text>Hello world!</Text>
         </Animated.View>

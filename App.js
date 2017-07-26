@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { StyleSheet, Text, View, Animated, PanResponder } from 'react-native';
-import Test from './src/Flix';
+import Test from './src/DragAndReset';
 
 const SWIPE_THRESHOLD = 120;
 
