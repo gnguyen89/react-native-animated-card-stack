@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { StyleSheet, Text, View, Animated, PanResponder } from 'react-native';
-import Test from './src/DragAndReset';
+import Test from './src/CardStack';
 
 const SWIPE_THRESHOLD = 120;
 
