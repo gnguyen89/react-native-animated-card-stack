@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
-import { StyleSheet, View, Animated, PanResponder } from 'react-native';
+import { StyleSheet, View, Animated, PanResponder, Easing, Dimensions } from 'react-native';
 import clamp from 'clamp';
 
+const colors = ['red', 'blue', 'gray', 'green', 'purple', 'orange'];
 
-const colors = ['red', 'blue', 'pink', 'green', 'purple', 'orange'];
-
-const SWIPE_THRESHOLD = 120;
+const SWIPE_THRESHOLD = Dimensions.get('window').width / 2;
 
 export default class CardStack extends Component {
   constructor(props) {
@@ -14,8 +13,7 @@ export default class CardStack extends Component {
     this.state = {
       pan: new Animated.ValueXY(),
       scale: new Animated.Value(1),
-      scale2: new Animated.Value(0.95),
-      scale3: new Animated.Value(0.9),
+      bottomCardScale: new Animated.Value(0.5),
       colorIndex: 0,
     };
 
@@ -53,9 +51,9 @@ export default class CardStack extends Component {
             deceleration: 0.98
           }).start(this.resetState)
         } else {
-          Animated.spring(            //Step 1
-            this.state.pan,         //Step 2
-            { toValue: { x:0, y:0 } }     //Step 3
+          Animated.spring(
+            this.state.pan,
+            { toValue: { x:0, y:0 } }
           ).start();
         }
         this.state.scale.setValue(1);
@@ -68,31 +66,21 @@ export default class CardStack extends Component {
       Animated.sequence([
         Animated.timing(
           this.state.scale,
-          { toValue: 1.1, duration: 100 }
+          { toValue: 1.1, duration: 100, easing: Easing.bounce }
         ),
         Animated.timing(
           this.state.scale,
-          { toValue: 1, duration: 100 }
+          { toValue: 1, duration: 100, easing: Easing.bounce }
         ),
       ]),
       Animated.sequence([
         Animated.timing(
-          this.state.scale2,
-          { toValue: 1.05, duration: 100 }
-        ),
-        Animated.timing(
-          this.state.scale2,
-          { toValue: 0.95, duration: 100 }
-        ),
-      ]),
-      Animated.sequence([
-        Animated.timing(
-          this.state.scale3,
+          this.state.bottomCardScale,
           { toValue: 1, duration: 100 }
         ),
         Animated.timing(
-          this.state.scale3,
-          { toValue: 0.9, duration: 100 }
+          this.state.bottomCardScale,
+          { toValue: 0.5, duration: 100 }
         ),
       ]),
     ])
@@ -111,16 +99,16 @@ export default class CardStack extends Component {
     this.setState({ colorIndex: newIndex });
   }
 
-  renderBottomCard(index, position, transform) {
-    return <Animated.View
+  renderBottomCard(data, transform) {
+    return data && <Animated.View
       style={transform}
     >
-      <View style={[styles.card, { backgroundColor: colors[index + position] }]} />
+      <View style={[styles.card, { backgroundColor: data }]} />
     </Animated.View>;
   }
 
   render() {
-    const { pan, scale, colorIndex, scale2, scale3 } = this.state;
+    const { pan, scale, colorIndex, bottomCardScale } = this.state;
 
     const [translateX, translateY] = [pan.x, pan.y];
     const rotate = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: ["-30deg", "0deg", "30deg"]});
@@ -128,13 +116,16 @@ export default class CardStack extends Component {
 
     const topCard = {position: 'absolute', transform: [{translateX}, {translateY}, {rotate}, {scale}], opacity};
 
-    const secondCard = {position: 'absolute', transform: [{translateX: 0}, {translateY: 10}, {rotate : '0deg'}, {scale: scale2}], opacity: 1};
-    const bottomCard = {position: 'absolute', transform: [{translateX: 0}, {translateY: 20}, {rotate : '0deg'}, {scale: scale3}], opacity: 1};
+    const secondCardScale = bottomCardScale.interpolate({inputRange: [0.5, 1], outputRange: [0.95, 1.05]});
+    const thirdCardScale = bottomCardScale.interpolate({inputRange: [0.5, 1], outputRange: [0.90, 1]});
+
+    const secondCard = {position: 'absolute', transform: [{translateX: 0}, {translateY: 10}, {rotate : '0deg'}, {scale: secondCardScale}], opacity: 1};
+    const bottomCard = {position: 'absolute', transform: [{translateX: 0}, {translateY: 20}, {rotate : '0deg'}, {scale: thirdCardScale}], opacity: 1};
 
     return (
       <View style={styles.container}>
-        {this.renderBottomCard(colorIndex, 2, bottomCard)}
-        {this.renderBottomCard(colorIndex, 1, secondCard)}
+        {this.renderBottomCard(colors[colorIndex + 2], bottomCard)}
+        {this.renderBottomCard(colors[colorIndex + 1], secondCard)}
         <Animated.View
           {...this._panResponder.panHandlers}
           style={topCard}
