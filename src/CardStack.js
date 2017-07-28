@@ -77,13 +77,26 @@ export default class CardStack extends Component {
     const rotate = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: ["-30deg", "0deg", "30deg"]});
     const opacity = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: [0.5, 1, 0.5]})
 
-    const helloStyles = {transform: [{translateX}, {translateY}, {rotate}, {scale}], opacity};
+    const topCard = {position: 'absolute', transform: [{translateX}, {translateY}, {rotate}, {scale}], opacity};
+
+    const secondCard = {position: 'absolute', transform: [{translateX: 0}, {translateY: 15}, {rotate : '0deg'}, {scale: 0.9}], opacity: 1};
+    const bottomCard = {position: 'absolute', transform: [{translateX: 0}, {translateY: 30}, {rotate : '0deg'}, {scale: 0.8}], opacity: 1};
 
     return (
       <View style={styles.container}>
         <Animated.View
+          style={bottomCard}
+        >
+          <View style={[styles.card, { backgroundColor: colors[colorIndex + 2] }]} />
+        </Animated.View>
+        <Animated.View
+          style={secondCard}
+        >
+          <View style={[styles.card, { backgroundColor: colors[colorIndex + 1] }]} />
+        </Animated.View>
+        <Animated.View
           {...this._panResponder.panHandlers}
-          style={helloStyles}
+          style={topCard}
         >
           <View style={[styles.card, { backgroundColor: colors[colorIndex] }]} />
         </Animated.View>
@@ -101,6 +114,6 @@ const styles = StyleSheet.create({
   },
   card: {
     width: 100,
-    height: 100,
+    height: 125,
   }
 });
