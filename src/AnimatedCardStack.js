@@ -1,12 +1,10 @@
-import React, { Component } from 'react';
+import React, { PropTypes, Component } from 'react';
 import { StyleSheet, View, Animated, PanResponder, Easing, Dimensions } from 'react-native';
 import clamp from 'clamp';
 
-const colors = ['red', 'blue', 'gray', 'green', 'purple', 'orange'];
-
 const SWIPE_THRESHOLD = Dimensions.get('window').width / 2;
 
-export default class CardStack extends Component {
+export default class AnimatedCardStack extends Component {
   constructor(props) {
     super(props);
 
@@ -14,7 +12,7 @@ export default class CardStack extends Component {
       pan: new Animated.ValueXY(),
       scale: new Animated.Value(1),
       bottomCardScale: new Animated.Value(0.5),
-      colorIndex: 0,
+      dataIndex: 0,
     };
 
     this.resetState = this.resetState.bind(this);
@@ -40,7 +38,8 @@ export default class CardStack extends Component {
       onPanResponderRelease: (e, { vx, vy }) => {
         // reset offset to help center box
         this.state.pan.flattenOffset();
-        if (Math.abs(this.state.pan.x._value) > SWIPE_THRESHOLD) {
+        const swipeThreshold = this.props.swipeThreshold || SWIPE_THRESHOLD;
+        if (Math.abs(this.state.pan.x._value) > swipeThreshold) {
           if (vx >= 0) {
             velocity = clamp(vx, 3, 5);
           } else if (vx < 0) {
@@ -94,21 +93,23 @@ export default class CardStack extends Component {
   }
   
   moveNext() {
-    const { colorIndex } = this.state;
-    const newIndex = (colorIndex === colors.length - 1) ? 0 : colorIndex + 1;
-    this.setState({ colorIndex: newIndex });
+    const { dataIndex } = this.state;
+    const { data } = this.props;
+    const newIndex = (dataIndex === data.length - 1) ? 0 : dataIndex + 1;
+    this.setState({ dataIndex: newIndex });
   }
 
-  renderBottomCard(data, transform) {
+  renderBottomCard(data, transform, element) {
     return data && <Animated.View
       style={transform}
     >
-      <View style={[styles.card, { backgroundColor: data }]} />
+      {React.cloneElement(element, { cardData: data })}
     </Animated.View>;
   }
 
   render() {
-    const { pan, scale, colorIndex, bottomCardScale } = this.state;
+    const { pan, scale, bottomCardScale, dataIndex } = this.state;
+    const { children, data } = this.props;
 
     const [translateX, translateY] = [pan.x, pan.y];
     const rotate = pan.x.interpolate({inputRange: [-200, 0, 200], outputRange: ["-30deg", "0deg", "30deg"]});
@@ -124,18 +125,24 @@ export default class CardStack extends Component {
 
     return (
       <View style={styles.container}>
-        {this.renderBottomCard(colors[colorIndex + 2], bottomCard)}
-        {this.renderBottomCard(colors[colorIndex + 1], secondCard)}
+        {this.renderBottomCard(data[dataIndex + 2], bottomCard, children)}
+        {this.renderBottomCard(data[dataIndex + 1], secondCard, children)}
         <Animated.View
           {...this._panResponder.panHandlers}
           style={topCard}
         >
-          <View style={[styles.card, { backgroundColor: colors[colorIndex] }]} />
+          {React.cloneElement(children, { cardData: data[dataIndex] })}
         </Animated.View>
       </View>
     );
   }
 }
+
+AnimatedCardStack.propTypes = {
+  children: PropTypes.node,
+  data: PropTypes.array,
+  swipeThreshold: PropTypes.number,
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -144,8 +151,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
   },
-  card: {
-    width: 150,
-    height: 200,
-  }
 });
